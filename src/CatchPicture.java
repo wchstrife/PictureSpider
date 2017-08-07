@@ -7,12 +7,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.omg.CORBA.PRIVATE_MEMBER;
+import org.omg.CORBA.PUBLIC_MEMBER;
+
 import java.net.URL;
 import java.net.URLConnection;
 
 public class CatchPicture {
 	
-	private static final String URL = "http://www.snhtl.com/html/article/index4012.html";
 	
 	private static final String ECODING = "UTF-8";
 	
@@ -20,22 +23,53 @@ public class CatchPicture {
 	
 	private static final String IMASRC_REG = "http:\"?(.*?)(\"|>|\\s+)";
 	
-	public static void main(String[] args) {
-		try{
-		CatchPicture catchPicture = new CatchPicture();
-		String HTML = catchPicture.getHTML(URL);
+	private static final String FIND_TITLE = "<div\\sclass=\"page_title\".*?>([\\s\\S]*)</div>";
 	
-		 //获取图片标签  
-        List<String> imgUrl = catchPicture.getImageUrl(HTML);  
-        //获取图片src地址  
-        List<String> imgSrc = catchPicture.getImageSrc(imgUrl);  
-        //下载图片  
-        catchPicture.Download(imgSrc);
-		}catch (Exception e) {
-			e.printStackTrace();
+	static CatchPicture catchPicture = new CatchPicture();
+	
+	public static void main(String[] args) {
+		
+		String target = "http://www.snhtl.com/html/article/index4011.html";
+		
+		String start = target.substring(target.indexOf("index")+5, target.indexOf(".html"));
+		String netPath;
+		
+		int count = Integer.parseInt(start);
+		
+		while(count>=4010){
+			netPath = "http://www.snhtl.com/html/article/index"+count+".html";
+			count--;
+			begin(netPath);
 		}
+		
 	}
 	
+	/**
+	 * 
+	 */
+	private static void begin(String url){
+		try{
+			
+			String HTML = catchPicture.getHTML(url);
+		
+			String path = "";
+			
+			if(null == catchPicture.findTitle(HTML)){
+				path = "image/";
+			}else {
+				path = "image/"+catchPicture.findTitle(HTML);
+			}
+					;
+			 //获取图片标签  
+	        List<String> imgUrl = catchPicture.getImageUrl(HTML);  
+	        //获取图片src地址  
+	        List<String> imgSrc = catchPicture.getImageSrc(imgUrl);  
+	        //下载图片  
+	        catchPicture.Download(imgSrc, path);
+			}catch (Exception e) {
+				e.printStackTrace();
+			}
+	}
 	/**
 	 * 获取HTML内容
 	 * @param url
@@ -55,6 +89,22 @@ public class CatchPicture {
         }  
         inputStream.close();  
         return sb.toString();
+	}
+	
+	/**
+	 * 查找当前下载的的标题
+	 * @param HTML
+	 * @return
+	 */
+	private String findTitle(String HTML) {
+		String input3="";
+		Matcher matcher = Pattern.compile(FIND_TITLE).matcher(HTML);
+		while(matcher.find()){
+			String input2 = matcher.group(1);
+			input3 = input2.substring(0, input2.indexOf("</div>"));
+		}
+		
+		return input3;
 	}
 	
 	/*** 
@@ -91,17 +141,22 @@ public class CatchPicture {
         return listImgSrc;  
     }  
     
-    private void Download(List<String> listImgSrc) {
+    private void Download(List<String> listImgSrc, String path) {
     	int count = 1;
+    	 File dir = new File(path);
+    	 if(!dir.exists()){
+    		 dir.mkdirs();
+    		 System.out.println("图片存放在" + dir);
+    	 }
         try {  
             for (String url : listImgSrc) {
             	StringBuilder sBuilder = new StringBuilder(url.substring(url.lastIndexOf("/") + 1, url.length()));
             	count++;
-            	sBuilder.insert(0, "image/"+String.valueOf(count));
+            	sBuilder.insert(0, String.valueOf(count));
                 String imageName = sBuilder.toString();
                 URL uri = new URL(url);  
                 InputStream in = uri.openStream();  
-                FileOutputStream fo = new FileOutputStream(new File(imageName));  
+                FileOutputStream fo = new FileOutputStream(new File(path+"/"+imageName));  
                 byte[] buf = new byte[1024];  
                 int length = 0;  
                 System.out.println("开始下载:" + url);  

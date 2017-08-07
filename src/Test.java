@@ -1,16 +1,23 @@
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Test {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		String url = "https://s18.postimg.org/cdaq4ytwp/image.jpg";
-		String temp = url.substring(url.lastIndexOf("/") + 1 , url.length());
-		System.out.println(temp);
-		StringBuilder sb = new StringBuilder(temp);
-		int count=1;
-		sb.insert(0, "image/" + String.valueOf(count));
+		String exp = "<div.class='page_title'.*?>([\\s\\S]*)</div>";
 		
-		System.out.println(sb.toString());
+		String input = " <div class='page_title'>嘘,别说话~夜晚的灯光很美.[30P]</div> ";
+		String result;
+		Pattern pattern = Pattern.compile(exp);
+		Matcher matcher = pattern.matcher(input);
+		while(matcher.find()){
+			String input2 = matcher.group(1);
+			System.out.println(input2);
+			
+	
+		}
+		
 	}
 
 }
